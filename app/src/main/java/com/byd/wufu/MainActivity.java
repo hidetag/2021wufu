@@ -4,13 +4,17 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 
@@ -25,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     private final List<String> titles = new ArrayList<>();
 
     private int currentIndex = 0;
+    private String phone = "";
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -42,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_save) {
-            save();
+            saveProgress();
             return true;
         }
 
@@ -61,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton fl = findViewById(R.id.fab_left);
         FloatingActionButton fr = findViewById(R.id.fab_right);
+        FloatingActionButton ftl = findViewById(R.id.fab_top_left);
         WebView webView = findViewById(R.id.wb);
 
         WebSettings webSettings = webView.getSettings();
@@ -75,7 +81,18 @@ public class MainActivity extends AppCompatActivity {
 
         webView.requestFocusFromTouch();
 
-//        currentIndex = 1 时 ，此时点击左边， 应该变成 0，此时点击左边，应该变成  titles.size()-1
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                final String js = "javascript:document.getElementsByClassName('btn___SkWL1')[0].click();";
+                view.evaluateJavascript(js, value -> {
+                    final String js1 = "javascript:document.getElementById('J-mobile').value = '" + phone + "';";
+                    view.evaluateJavascript(js1, value1 -> {
+                    });
+                });
+            }
+        });
 
         fl.setOnClickListener(v -> {
             if (currentIndex - 1 == 0) {
@@ -107,12 +124,14 @@ public class MainActivity extends AppCompatActivity {
             toolbar.setTitle(title + "（" + (currentIndex + 1) + "/" + titles.size() + "）");
         });
 
-        SharedPreferences sharedPreferences = getSharedPreferences("progress", Context.MODE_PRIVATE);
-        int index = sharedPreferences.getInt("index", 0);
+        ftl.setOnClickListener(v -> showDialog());
 
-        currentIndex = index;
-        webView.loadUrl(urls.get(index));
-        toolbar.post(() -> toolbar.setTitle(titles.get(index) + "（" + (currentIndex + 1) + "/" + titles.size() + "）"));
+        SharedPreferences sharedPreferences = getSharedPreferences("progress", Context.MODE_PRIVATE);
+        currentIndex = sharedPreferences.getInt("index", 0);
+        phone = sharedPreferences.getString("phone", "");
+
+        webView.loadUrl(urls.get(currentIndex));
+        toolbar.post(() -> toolbar.setTitle(titles.get(currentIndex) + "（" + (currentIndex + 1) + "/" + titles.size() + "）"));
     }
 
     private void init() {
@@ -223,12 +242,20 @@ public class MainActivity extends AppCompatActivity {
         titles.add("书旗小说");
     }
 
-    private void save() {
+    private void saveProgress() {
         SharedPreferences sharedPreferences = getSharedPreferences("progress", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt("index", currentIndex);
         editor.apply();
         Toast.makeText(this, "保存进度成功，下次进入直接还原到当前进度", Toast.LENGTH_SHORT).show();
+    }
+
+    private void savePhone(String phone) {
+        SharedPreferences sharedPreferences = getSharedPreferences("progress", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("phone", phone);
+        editor.apply();
+        Toast.makeText(this, "保存手机号成功，下次进入无需输入手机号", Toast.LENGTH_SHORT).show();
     }
 
     private long exitTime;
@@ -246,5 +273,21 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onKeyDown(keyCode, event);
     }
+
+    private void showDialog() {
+        final EditText edit = new EditText(this);
+        edit.setInputType(InputType.TYPE_CLASS_PHONE);
+        AlertDialog.Builder editDialog = new AlertDialog.Builder(this);
+        editDialog.setTitle("请输入手机号");
+        editDialog.setView(edit);
+        editDialog.setPositiveButton("保存", (dialog, which) -> {
+            String phone = edit.getEditableText().toString();
+            MainActivity.this.phone = phone;
+            savePhone(phone);
+            dialog.dismiss();
+        });
+        editDialog.create().show();
+    }
+
 
 }
