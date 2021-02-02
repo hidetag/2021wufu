@@ -13,9 +13,9 @@ apk 已经经过 小米10、vivo Reno 5 Pro，小米 8，红米 K30S 极速版 �
 
 软件仅申请了网络权限，其余功能均在本地，因为访问网址资源需要联网
 
-<img src="https://github.com/hidetag/2021wufu/blob/main/pic/11.jpg" width="360" height="780" alt="图片描述文字"/>
-<img src="https://github.com/hidetag/2021wufu/blob/main/pic/22.jpg" width="360" height="780" alt="图片描述文字"/>
-<img src="https://github.com/hidetag/2021wufu/blob/main/pic/33.jpg" width="360" height="780" alt="图片描述文字"/>
+<img src="https://github.com/hidetag/2021wufu/blob/main/pic/11.png" width="360" height="780" alt="图片描述文字"/>
+<img src="https://github.com/hidetag/2021wufu/blob/main/pic/22.png" width="360" height="780" alt="图片描述文字"/>
+<img src="https://github.com/hidetag/2021wufu/blob/main/pic/33.png" width="360" height="780" alt="图片描述文字"/>
 
 
 #### v1.0
