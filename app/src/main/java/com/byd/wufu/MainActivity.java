@@ -4,10 +4,14 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.InputType;
+import android.util.DisplayMetrics;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -20,6 +24,7 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
 
     private int currentIndex = 0;
     private String phone = "";
+
+    private float x, y = 0f;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -64,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
 
         init();
 
+        initScreen();
+
         FloatingActionButton fl = findViewById(R.id.fab_left);
         FloatingActionButton fr = findViewById(R.id.fab_right);
         FloatingActionButton ftl = findViewById(R.id.fab_top_left);
@@ -87,9 +96,24 @@ public class MainActivity extends AppCompatActivity {
                 super.onPageFinished(view, url);
                 final String js = "javascript:document.getElementsByClassName('btn___SkWL1')[0].click();";
                 view.evaluateJavascript(js, value -> {
-                    final String js1 = "javascript:document.getElementById('J-mobile').value = '" + phone + "';";
-                    view.evaluateJavascript(js1, value1 -> {
-                    });
+                    // 抛弃原有方式是因为可能阿里那边没有在 <input></input> 上做文章，阿里做了处理，只取键盘输入的值，所以这里只有另辟蹊径了
+                    try {
+                        Runtime.getRuntime().exec("input tap " + x + " " + y);
+                        new Thread(() -> {
+                            SystemClock.sleep(200);
+                            try {
+                                Runtime.getRuntime().exec("input keyboard text " + phone + "\"");
+
+                                InputMethodManager imm = (InputMethodManager) MainActivity.this.getSystemService(Context.INPUT_METHOD_SERVICE);
+                                imm.hideSoftInputFromWindow(MainActivity.this.getWindow().getDecorView().getWindowToken(), 0);
+
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }).start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 });
             }
         });
@@ -242,6 +266,21 @@ public class MainActivity extends AppCompatActivity {
         titles.add("书旗小说");
     }
 
+    private void initScreen() {
+        WindowManager wm = (WindowManager) this.getSystemService(Context.WINDOW_SERVICE);
+        DisplayMetrics dm = new DisplayMetrics();
+        wm.getDefaultDisplay().getMetrics(dm);
+
+        // 按照 1080x2119 的屏幕来算，输入框中间的坐标大约在：540, 885
+        // 所以得到比例大约是 0.5, 0.42
+
+        int width = dm.widthPixels;    // 0.5
+        int height = dm.heightPixels;  // 0.42
+
+        x = width * 0.5f;
+        y = height * 0.42f;
+    }
+
     private void saveProgress() {
         SharedPreferences sharedPreferences = getSharedPreferences("progress", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -288,6 +327,4 @@ public class MainActivity extends AppCompatActivity {
         });
         editDialog.create().show();
     }
-
-
 }
